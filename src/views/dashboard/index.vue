@@ -2,8 +2,11 @@
   <div>
     <div>
       <el-table
-        :data="(tableData.filter(data => !search || data.name.toLowerCase().includes(search.toLowerCase()))).slice((currentPage-1)*pageSize,currentPage*pageSize)"
+        :data="tableData"
         stripe
+        row-key="id"
+        default-sort = "{prop: 'date', order: 'ascending'}"
+        @row-click="this.rowClick"
         style="width: 100%">
         <el-pagination
           background
@@ -18,14 +21,25 @@
         </el-table-column>
         <el-table-column
           sortable
-          prop="name"
-          label="课程名称姓名"
+          prop="form"
+          label="上课形式"
           width="180">
         </el-table-column>
         <el-table-column
           sortable
-          prop="address"
-          label="地址">
+          prop="teacher.name"
+          width="180"
+          label="教师名称">
+        </el-table-column>
+        <el-table-column
+          sortable
+          prop="place"
+          label="上课地点">
+        </el-table-column>
+        <el-table-column
+          sortable
+          prop="courseName"
+          label="课程名称">
         </el-table-column>
         <el-table-column
           align="right">
@@ -68,64 +82,16 @@
     name: 'Dashboard',
     data() {
       return {
-        tableData: [{
-          date: '2016-05-02',
-          name: 'a小虎',
-          address: '上海市普陀区金沙江路 1518 弄'
-        }, {
-          date: '2016-05-04',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1517 弄'
-        }, {
-          date: '2016-05-01',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1519 弄'
-        }, {
-          date: '2016-05-03',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1516 弄'
-        }, {
-          date: '2016-05-04',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1517 弄'
-        }, {
-          date: '2016-05-01',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1519 弄'
-        }, {
-          date: '2016-05-03',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1516 弄'
-        }, {
-          date: '2016-05-04',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1517 弄'
-        }, {
-          date: '2016-05-01',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1519 弄'
-        }, {
-          date: '2016-05-03',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1516 弄'
-        }, {
-          date: '2016-05-04',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1517 弄'
-        }, {
-          date: '2016-05-01',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1519 弄'
-        }, {
-          date: '2016-05-03',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1516 弄'
-        }],
+        tableData: [],
         search: '',
         currentPage: 1, // 当前页码
         total: 20, // 总条数
-        pageSize: 2 // 每页的数据条数
+        pageSize: 10, // 每页的数据条数
+        url: process.env.VUE_APP_BASE_API
       };
+    },
+    created() {
+      this.list(this.currentPage, this.total, this.pageSize);
     },
     computed: {
       ...mapGetters([
@@ -149,7 +115,22 @@
       handleCurrentChange(val) {
         console.log(`当前页: ${val}`);
         this.currentPage = val;
+      },
+      list(current,total,size){
+        this.$http.post(this.url + "/course/list",{
+          "current": current,
+          "total": total,
+          "size": size,
+        }).then(data=>{
+          console.log(data);
+          this.tableData = data.data.courseList;
+        })
+      },
+
+      rowClick(row, column, event){
+        console.log(row.id);
       }
+
     }
   }
 </script>
