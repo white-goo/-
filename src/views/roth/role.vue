@@ -238,7 +238,11 @@
           id: row.id
         }).then(date => {
           this.form = date.data.data;
-          this.$http.post(this.url + "/auth/user/list").then(date=>{
+          this.$http.post(this.url + "/auth/user/list",{
+            current: this.currentPage,
+            total: this.total,
+            size: 2147283647,
+          }).then(date=>{
             this.options = date.data.data;
             this.saveDisplay = 'none';
             this.$http.post(this.url + "/auth/list").then(date => {
@@ -270,7 +274,11 @@
       )
       },
       newRole() {
-        this.$http.post(this.url + "/auth/user/list").then(date => {
+        this.$http.post(this.url + "/auth/user/list",{
+          current: this.currentPage,
+          total: this.total,
+          size: 2147283647,
+        }).then(date => {
           console.log(date)
           this.form.roleName = '';
           this.form.userId = '';
