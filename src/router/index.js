@@ -61,14 +61,22 @@ export const constantRoutes = [
 export const asyncRoutes = [
 
   {
-    path: "/rothTest",
+    path: "/auth",
     component: Layout,
+    redirect: "/auth/role",
+    meta:{title: '权限管理', icon:'form', roles:['auth:AUTH_ADMIN','auth:AUTH_USER_ADMIN','auth:AUTH_ROLE_ADMIN']},
     children: [
       {
         path: "index",
         name: "Index",
-        component: () => import('@/views/rothTest/index'),
-        meta: {title: '权限测试', icon: 'form',roles:['test']}
+        component: () => import('@/views/roth/index'),
+        meta: {title: '用户管理', icon: 'form',roles:['auth:AUTH_ADMIN','auth:AUTH_USER_ADMIN']}
+      },
+      {
+        path: "role",
+        name: "Role",
+        component: () => import('@/views/roth/role'),
+        meta: {title: '角色管理', icon: 'form',roles:['auth:AUTH_ADMIN','auth:AUTH_ROLE_ADMIN']}
       }
     ]
   }

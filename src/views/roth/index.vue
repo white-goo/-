@@ -16,31 +16,17 @@
         </el-pagination>
         <el-table-column
           sortable
-          prop="date"
-          label="开课日期"
-          :formatter="dateForm"
-          width="180">
+          prop="roleName"
+          label="课程名称">
         </el-table-column>
         <el-table-column
           sortable
-          prop="form"
-          label="上课形式"
-          width="180">
+          prop="createTime"
+          label="课程名称">
         </el-table-column>
         <el-table-column
           sortable
-          prop="teacher.name"
-          width="180"
-          label="教师名称">
-        </el-table-column>
-        <el-table-column
-          sortable
-          prop="place"
-          label="上课地点">
-        </el-table-column>
-        <el-table-column
-          sortable
-          prop="courseName"
+          prop="editTime"
           label="课程名称">
         </el-table-column>
         <el-table-column
@@ -50,7 +36,7 @@
               v-model="search"
               size="mini"
               @change="select"
-              placeholder="输入课程名称搜索">
+              placeholder="输入角色名称搜索">
               <i slot="prefix" class="el-input__icon el-icon-search"></i>
             </el-input>
           </template>
@@ -82,19 +68,8 @@
     <div>
       <el-dialog title="课程详情" :visible.sync="dialogFormVisible">
         <el-form :model="form">
-          <el-form-item label="课程名称" :label-width="formLabelWidth">
+          <el-form-item label="角色名称" :label-width="roleName">
             <el-input :disabled="form.disabled" v-model="form.courseName" autocomplete="off"></el-input>
-          </el-form-item>
-          <el-form-item label="上课地点" :label-width="formLabelWidth">
-            <el-input :disabled="form.disabled" v-model="form.place" autocomplete="off"></el-input>
-          </el-form-item>
-          <el-form-item label="上课时间" :label-width="formLabelWidth">
-            <el-date-picker
-              :disabled="form.disabled"
-              v-model="form.date"
-              type="date"
-              placeholder="选择日期">
-            </el-date-picker>
           </el-form-item>
           <el-form-item label="教师名称" :label-width="formLabelWidth">
             <el-select :disabled="form.disabled" v-model="form.teacher.id" placeholder="请选择">
@@ -116,7 +91,8 @@
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button @click="dialogFormVisible = false">取 消</el-button>
-          <el-button :style="{display:form.newDisplay}" type="primary" @click="dialogFormVisible = false">确 定</el-button>
+          <el-button :style="{display:form.newDisplay}" type="primary" @click="dialogFormVisible = false">确 定
+          </el-button>
           <el-button :style="{display:form.saveDisplay}" type="primary" @click="save">保 存</el-button>
         </div>
       </el-dialog>
@@ -154,29 +130,23 @@
         dialogTableVisible: false,
         dialogFormVisible: false,
         form: {
-          courseName: '',
-          place: '',
-          form: '',
-          date: '',
-          teacher: {
-            id:'',
-            name: ''
-          },
-          date1: '',
-          date2: '',
-          delivery: false,
-          type: [],
-          resource: '',
-          desc: '',
-          disabled: true,
-          options: [],
-          saveDisplay: 'none',
-          newDisplay: '',
-          credit: 0
+          roleName: ''
         },
+        date1: '',
+        date2: '',
+        delivery: false,
+        type: [],
+        resource: '',
+        desc: '',
+        disabled: true,
+        options: [],
+        saveDisplay: 'none',
+        newDisplay: '',
+        credit: 0,
         formLabelWidth: '120px'
       };
     },
+
     created() {
       this.list();
     },
@@ -219,17 +189,14 @@
       list(conditions) {
         console.log(this.currentPage, this.total, this.size, this.conditions)
         this.loading = true;
-        this.$http.post(this.url + "/course/list", {
+        this.$http.post(this.url + "/role/list", {
           current: this.currentPage,
           total: this.total,
           size: this.pageSize,
           conditions
         }).then(data => {
           console.log(data);
-          data.data.courseList.map((item, index) => {
-            item.form = item.form === "ONLINE" ? "网课" : "线下";
-          })
-          this.tableData = data.data.courseList;
+          this.tableData = data.data;
           this.loading = false;
         })
       },
@@ -253,7 +220,7 @@
       },
 
       select(string) {
-        this.list({"course_name": string});
+        this.list({"role_name": string});
       },
       dateForm(row, column) {
         return formatDate(row[column.property], "yyyy-MM-dd");
@@ -266,18 +233,17 @@
         target.blur();
         this.list();
       },
-      renderHeader () {
+      renderHeader() {
         return (
-          <div><el-button type="primary" size='small' on-click= {()=>this.newCourse()}> 新增 </el-button></div>
-        )
+          <div>< el-button type = "primary" size = 'small' on-click = {()=>this.newCourse()}> 新增 < /el-button></div>
+      )
       },
-      newCourse(){
-        this.$http.post(this.url + "/course/teacher/list").then(date=>{
+      newCourse() {
+        this.$http.post(this.url + "/course/teacher/list").then(date => {
           console.log(date)
           this.form.date = "";
           this.form.form = "ONLINE";
           this.form.teacher.name = "";
-          this.form.teacher.id = "";
           this.form.courseName = "";
           this.form.place = "";
           this.form.credit = 0;
@@ -288,16 +254,16 @@
           this.dialogFormVisible = true;
         })
       },
-      save(){
-        this.$http.post(this.url + "/course/save",{
+      save() {
+        this.$http.post(this.url + "/course/save", {
           courseName: this.form.courseName,
           teacher: this.form.teacher,
           credit: this.form.credit,
           place: this.form.place,
           form: this.form.form,
           date: this.form.date
-        }).then(date=>{
-          if(date.data.code === 20000){
+        }).then(date => {
+          if (date.data.code === 20000) {
             this.$message({
               message: '保存成功',
               type: 'success'

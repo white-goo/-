@@ -16,32 +16,18 @@
         </el-pagination>
         <el-table-column
           sortable
-          prop="date"
-          label="开课日期"
-          :formatter="dateForm"
-          width="180">
+          prop="roleName"
+          label="角色名称">
         </el-table-column>
         <el-table-column
           sortable
-          prop="form"
-          label="上课形式"
-          width="180">
+          prop="createTime"
+          label="创建时间">
         </el-table-column>
         <el-table-column
           sortable
-          prop="teacher.name"
-          width="180"
-          label="教师名称">
-        </el-table-column>
-        <el-table-column
-          sortable
-          prop="place"
-          label="上课地点">
-        </el-table-column>
-        <el-table-column
-          sortable
-          prop="courseName"
-          label="课程名称">
+          prop="editTime"
+          label="修改时间">
         </el-table-column>
         <el-table-column
           align="right">
@@ -50,7 +36,7 @@
               v-model="search"
               size="mini"
               @change="select"
-              placeholder="输入课程名称搜索">
+              placeholder="输入角色名称搜索">
               <i slot="prefix" class="el-input__icon el-icon-search"></i>
             </el-input>
           </template>
@@ -80,44 +66,38 @@
       </el-table>
     </div>
     <div>
-      <el-dialog title="课程详情" :visible.sync="dialogFormVisible">
+      <el-dialog title="角色详情" :visible.sync="dialogFormVisible">
         <el-form :model="form">
-          <el-form-item label="课程名称" :label-width="formLabelWidth">
-            <el-input :disabled="form.disabled" v-model="form.courseName" autocomplete="off"></el-input>
+          <el-form-item label="角色名称" :label-width="form.roleName">
+            <el-input :disabled="this.disabled" v-model="form.roleName" autocomplete="off"></el-input>
           </el-form-item>
-          <el-form-item label="上课地点" :label-width="formLabelWidth">
-            <el-input :disabled="form.disabled" v-model="form.place" autocomplete="off"></el-input>
-          </el-form-item>
-          <el-form-item label="上课时间" :label-width="formLabelWidth">
-            <el-date-picker
-              :disabled="form.disabled"
-              v-model="form.date"
-              type="date"
-              placeholder="选择日期">
-            </el-date-picker>
-          </el-form-item>
-          <el-form-item label="教师名称" :label-width="formLabelWidth">
-            <el-select :disabled="form.disabled" v-model="form.teacher.id" placeholder="请选择">
+          <el-form-item>
+            <el-select :disabled="this.disabled" v-model="form.userId" multiple placeholder="请选择">
               <el-option
-                v-for="item in form.options"
+                v-for="item in options"
                 :key="item.id"
-                :label="item.name"
+                :label="item.username"
                 :value="item.id">
               </el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="上课形式" :label-width="formLabelWidth">
-            <el-radio :disabled="form.disabled" v-model="form.form" label="ONLINE">网课</el-radio>
-            <el-radio :disabled="form.disabled" v-model="form.form" label="OFFLINE">线下</el-radio>
-          </el-form-item>
-          <el-form-item label="学分" :label-width="formLabelWidth">
-            <el-input-number :disabled="form.disabled" :min="0" :max="10" v-model="form.credit"></el-input-number>
+          <el-form-item>
+            <el-select :disabled="this.disabled" v-model="form.authId" multiple placeholder="请选择">
+              <el-option
+                v-for="item in authOptions"
+                :key="item.id"
+                :label="item.authShowName"
+                :value="item.id">
+              </el-option>
+            </el-select>
           </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button @click="dialogFormVisible = false">取 消</el-button>
-          <el-button :style="{display:form.newDisplay}" type="primary" @click="dialogFormVisible = false">确 定</el-button>
-          <el-button :style="{display:form.saveDisplay}" type="primary" @click="save">保 存</el-button>
+          <el-button :style="{display:newDisplay}" type="primary" @click="dialogFormVisible = false">确 定
+          </el-button>
+          <el-button :style="{display:saveDisplay}" type="primary" @click="save">保 存</el-button>
+          <el-button :style="{display:updateDisplay}" type="primary" @click="update">更新</el-button>
         </div>
       </el-dialog>
     </div>
@@ -154,29 +134,28 @@
         dialogTableVisible: false,
         dialogFormVisible: false,
         form: {
-          courseName: '',
-          place: '',
-          form: '',
-          date: '',
-          teacher: {
-            id:'',
-            name: ''
-          },
-          date1: '',
-          date2: '',
-          delivery: false,
-          type: [],
-          resource: '',
-          desc: '',
-          disabled: true,
-          options: [],
-          saveDisplay: 'none',
-          newDisplay: '',
-          credit: 0
+          roleName: '',
+          userId: [],
+          authId: [],
+          id : ''
         },
+        date1: '',
+        date2: '',
+        delivery: false,
+        type: [],
+        resource: '',
+        desc: '',
+        disabled: true,
+        options: [],
+        authOptions: [],
+        saveDisplay: 'none',
+        updateDisplay: 'none',
+        newDisplay: '',
+        credit: 0,
         formLabelWidth: '120px'
       };
     },
+
     created() {
       this.list();
     },
@@ -194,7 +173,7 @@
           customClass: 'del-model',
           type: 'warning'
         }).then(() => {
-          this.$http.post(this.url + "/course/delete", {
+          this.$http.post(this.url + "/auth/role/delete", {
             id: row.id
           }).then(() => {
             this.list()
@@ -219,41 +198,60 @@
       list(conditions) {
         console.log(this.currentPage, this.total, this.size, this.conditions)
         this.loading = true;
-        this.$http.post(this.url + "/course/list", {
+        this.$http.post(this.url + "/auth/role/list", {
           current: this.currentPage,
           total: this.total,
           size: this.pageSize,
           conditions
         }).then(data => {
           console.log(data);
-          data.data.courseList.map((item, index) => {
-            item.form = item.form === "ONLINE" ? "网课" : "线下";
-          })
-          this.tableData = data.data.courseList;
+          this.tableData = data.data.data;
           this.loading = false;
         })
       },
 
       rowClick(row, column, event) {
         console.log(row, column, event);
-        this.$http.post(this.url + "/course/load", {
+        this.$http.post(this.url + "/auth/authCheck", [
+          {
+            key : "auth1",
+            params : {
+              roleName: this.form.roleName,
+              authId: this.form.authId,
+              userId: this.form.userId
+            },
+            path : "/auth/role/update"
+          }
+        ]).then(date=>{
+          if(date.data.data.auth1){
+            this.updateDisplay = '';
+            this.newDisplay = 'none';
+            this.disabled = false;
+          }else {
+            this.updateDisplay = 'none';
+            this.newDisplay = '';
+            this.disabled = true;
+          }
+        })
+
+        this.$http.post(this.url + "/auth/role/load", {
           id: row.id
         }).then(date => {
-          this.form.date = date.data.course.date;
-          this.form.form = date.data.course.form;
-          this.form.teacher = date.data.course.teacher;
-          this.form.courseName = date.data.course.courseName;
-          this.form.place = date.data.course.place;
-          this.form.saveDisplay = 'none';
-          this.form.newDisplay = '';
-          this.form.disabled = true;
-          this.dialogFormVisible = true;
-          this.form.credit = date.data.course.credit;
+          this.form = date.data.data;
+          this.$http.post(this.url + "/auth/user/list").then(date=>{
+            this.options = date.data.data;
+            this.saveDisplay = 'none';
+            this.$http.post(this.url + "/auth/list").then(date => {
+              console.log(date.data.data)
+              this.authOptions = date.data.data;
+              this.dialogFormVisible = true;
+            })
+          })
         })
       },
 
       select(string) {
-        this.list({"course_name": string});
+        this.list({"role_name": string});
       },
       dateForm(row, column) {
         return formatDate(row[column.property], "yyyy-MM-dd");
@@ -266,38 +264,55 @@
         target.blur();
         this.list();
       },
-      renderHeader () {
+      renderHeader() {
         return (
-          <div><el-button type="primary" size='small' on-click= {()=>this.newCourse()}> 新增 </el-button></div>
-        )
+          <div>< el-button type = "primary" size = 'small' on-click = {()=>this.newRole()}> 新增 < /el-button></div>
+      )
       },
-      newCourse(){
-        this.$http.post(this.url + "/course/teacher/list").then(date=>{
+      newRole() {
+        this.$http.post(this.url + "/auth/user/list").then(date => {
           console.log(date)
-          this.form.date = "";
-          this.form.form = "ONLINE";
-          this.form.teacher.name = "";
-          this.form.teacher.id = "";
-          this.form.courseName = "";
-          this.form.place = "";
-          this.form.credit = 0;
-          this.form.options = date.data.data;
-          this.form.saveDisplay = '';
-          this.form.newDisplay = 'none';
-          this.form.disabled = false;
-          this.dialogFormVisible = true;
+          this.form.roleName = '';
+          this.form.userId = '';
+          this.form.authId = '';
+          this.form.id = '';
+          this.options = date.data.data;
+          this.$http.post(this.url + "/auth/list").then(date => {
+            console.log(date.data.data)
+            this.authOptions = date.data.data;
+            this.saveDisplay = '';
+            this.newDisplay = 'none';
+            this.disabled = false;
+            this.dialogFormVisible = true;
+          })
         })
       },
-      save(){
-        this.$http.post(this.url + "/course/save",{
-          courseName: this.form.courseName,
-          teacher: this.form.teacher,
-          credit: this.form.credit,
-          place: this.form.place,
-          form: this.form.form,
-          date: this.form.date
+      save() {
+        console.log(this.form.userId)
+        console.log(this.defaultProps)
+        this.$http.post(this.url + "/auth/role/save", {
+          roleName: this.form.roleName,
+          authId: this.form.authId,
+          userId: this.form.userId
+        }).then(date => {
+          if (date.data.code === 20000) {
+            this.$message({
+              message: '保存成功',
+              type: 'success'
+            });
+            this.dialogFormVisible = false;
+            this.list();
+          }
+        })
+      },
+      update(){
+        this.$http.post(this.url + "/auth/role/update",{
+          roleName: this.form.roleName,
+          authId: this.form.authId,
+          userId: this.form.userId,
+          id: this.form.id
         }).then(date=>{
-          if(date.data.code === 20000){
+          if (date.data.code === 20000) {
             this.$message({
               message: '保存成功',
               type: 'success'

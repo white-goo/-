@@ -15,6 +15,7 @@ import '@/icons' // icon
 import '@/permission' // permission control
 
 import axios from 'axios'
+axios.defaults.withCredentials=true
 Vue.prototype.$http = axios
 
 /**
