@@ -22,11 +22,13 @@
         <el-table-column
           sortable
           prop="createTime"
+          :formatter="dateForm"
           label="创建时间">
         </el-table-column>
         <el-table-column
           sortable
           prop="editTime"
+          :formatter="dateForm"
           label="修改时间">
         </el-table-column>
         <el-table-column
@@ -46,7 +48,7 @@
               slot="reference"
               type="danger"
               @click.stop="handleDelete(scope.$index, scope.row)"
-            >Delete
+            >删除
             </el-button>
           </template>
         </el-table-column>
@@ -71,17 +73,17 @@
           <el-form-item label="角色名称" :label-width="form.roleName">
             <el-input :disabled="this.disabled" v-model="form.roleName" autocomplete="off"></el-input>
           </el-form-item>
-          <el-form-item>
+          <el-form-item label="用户">
             <el-select :disabled="this.disabled" v-model="form.userId" multiple placeholder="请选择">
               <el-option
                 v-for="item in options"
                 :key="item.id"
-                :label="item.username"
+                :label="item.name"
                 :value="item.id">
               </el-option>
             </el-select>
           </el-form-item>
-          <el-form-item>
+          <el-form-item label="权限">
             <el-select :disabled="this.disabled" v-model="form.authId" multiple placeholder="请选择">
               <el-option
                 v-for="item in authOptions"
@@ -214,13 +216,14 @@
         console.log(row, column, event);
         this.$http.post(this.url + "/auth/authCheck", [
           {
-            key : "auth1",
-            params : {
+            key: "auth1",
+            params: {
               roleName: this.form.roleName,
               authId: this.form.authId,
               userId: this.form.userId
             },
-            path : "/auth/role/update"
+            path: "/auth/role/update",
+            module: "auth"
           }
         ]).then(date=>{
           if(date.data.data.auth1){
@@ -329,7 +332,10 @@
             this.list();
           }
         })
-      }
+      },
+      dateForm(row, column) {
+        return formatDate(row[column.property], "yyyy-MM-dd");
+      },
     }
   }
 </script>

@@ -79,7 +79,18 @@ export const asyncRoutes = [
         meta: {title: '角色管理', icon: 'form',roles:['auth:AUTH_ADMIN','auth:AUTH_ROLE_ADMIN']}
       }
     ]
-  }
+  },
+  {
+    path: "/myCourse",
+    component: Layout,
+    redirect: "/myCourse/index",
+    children: [{
+      path: 'index',
+      name: 'Index',
+      component: () => import('@/views/myCourse/index'),
+      meta:{title: '我的课程', icon:'form', roles:['COURSE:COURSE_STUDENT']},
+    }]
+  },
 ]
 
 const createRouter = () => new Router({

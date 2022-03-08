@@ -16,17 +16,19 @@
         </el-pagination>
         <el-table-column
           sortable
-          prop="username"
+          prop="name"
           label="用户名">
         </el-table-column>
         <el-table-column
           sortable
           prop="createTime"
+          :formatter="dateForm"
           label="创建时间">
         </el-table-column>
         <el-table-column
           sortable
           prop="editTime"
+          :formatter="dateForm"
           label="修改时间">
         </el-table-column>
         <el-table-column
@@ -36,7 +38,7 @@
               v-model="search"
               size="mini"
               @change="select"
-              placeholder="输入用户名称搜索">
+              placeholder="输入账号名称搜索">
               <i slot="prefix" class="el-input__icon el-icon-search"></i>
             </el-input>
           </template>
@@ -46,7 +48,7 @@
               slot="reference"
               type="danger"
               @click.stop="handleDelete(scope.$index, scope.row)"
-            >Delete
+            >删除
             </el-button>
           </template>
         </el-table-column>
@@ -68,11 +70,15 @@
     <div>
       <el-dialog title="用户详情" :visible.sync="dialogFormVisible">
         <el-form :model="form">
-          <el-form-item label="用户名" :label-width="form.username">
+          <el-form-item label="登录账号" :label-width="form.username">
             <el-input :disabled="this.disabled" v-model="form.username" autocomplete="off"></el-input>
           </el-form-item>
+          <el-form-item label="用户名" :label-width="form.name">
+            <el-input :disabled="this.disabled" v-model="form.name" autocomplete="off"></el-input>
+          </el-form-item>
           <el-form-item label="密码" :label-width="form.password">
-            <el-input placeholder="请输入密码" :disabled="this.disabled" v-model="form.password" show-password autocomplete="off"></el-input>
+            <el-input placeholder="请输入密码" :disabled="this.disabled" v-model="form.password" show-password
+                      autocomplete="off"></el-input>
           </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer">
@@ -119,7 +125,8 @@
         form: {
           username: '',
           password: '',
-          id : ''
+          name: '',
+          id: ''
         },
         date1: '',
         date2: '',
@@ -194,20 +201,22 @@
 
       rowClick(row, column, event) {
         console.log(row, column, event);
+        this.saveDisplay = 'none';
         this.$http.post(this.url + "/auth/authCheck", [
           {
-            key : "auth1",
-            params : {
+            key: "auth1",
+            params: {
               id: row.id
             },
-            path : "/auth/user/update"
+            path: "/auth/user/update",
+            module: "auth"
           }
-        ]).then(date=>{
-          if(date.data.data.auth1){
+        ]).then(date => {
+          if (date.data.data.auth1) {
             this.updateDisplay = '';
             this.newDisplay = 'none';
             this.disabled = false;
-          }else {
+          } else {
             this.updateDisplay = 'none';
             this.newDisplay = '';
             this.disabled = true;
@@ -243,7 +252,10 @@
       },
       newRole() {
         this.form.id = '';
+        this.form.name = '';
+        this.form.username = '';
         this.saveDisplay = '';
+        this.updateDisplay = 'none';
         this.newDisplay = 'none';
         this.disabled = false;
         this.dialogFormVisible = true;
@@ -251,7 +263,8 @@
       save() {
         this.$http.post(this.url + "/auth/user/save", {
           username: this.form.username,
-          password: this.form.password
+          password: this.form.password,
+          name: this.form.name
         }).then(date => {
           if (date.data.code === 20000) {
             this.$message({
@@ -263,8 +276,8 @@
           }
         })
       },
-      update(){
-        this.$http.post(this.url + "/auth/user/update",this.form).then(date=>{
+      update() {
+        this.$http.post(this.url + "/auth/user/update", this.form).then(date => {
           if (date.data.code === 20000) {
             this.$message({
               message: '保存成功',

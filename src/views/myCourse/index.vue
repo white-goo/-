@@ -45,24 +45,12 @@
         </el-table-column>
         <el-table-column
           align="right">
-          <template slot-scope="scope">
-            <el-button
-              v-if="scope.row.status === 'START' && scope.row.isChoose"
-              size="mini"
-              slot="reference"
-              type="primary"
-              @click.stop="handleChoose(scope.$index, scope.row)"
-            >选课
-            </el-button>
-          </template>
-        </el-table-column>
-        <el-table-column
-          align="right">
           <template slot="header" slot-scope="scope">
             <el-input
               v-model="search"
               size="mini"
               @change="select"
+
               placeholder="输入课程名称搜索">
               <i slot="prefix" class="el-input__icon el-icon-search"></i>
             </el-input>
@@ -72,25 +60,14 @@
               size="mini"
               slot="reference"
               type="danger"
-              :style="{display:deleteDisplay}"
               @click.stop="handleDelete(scope.$index, scope.row)"
             >删除
             </el-button>
           </template>
         </el-table-column>
         <el-table-column
-          :render-header="renderHeader"
           width="120"
-        >
-          <template slot="operation" slot-scope="{col}">
-            <el-table-column
-              :key="col.index"
-              :label="col.name"
-              :prop="col.index"
-              :width="col.width">
-            </el-table-column>
-          </template>
-        </el-table-column>
+        ></el-table-column>
       </el-table>
     </div>
     <div>
@@ -141,8 +118,6 @@
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button @click="dialogFormVisible = false">取 消</el-button>
-          <el-button :style="{display:form.newDisplay}" type="primary" @click="dialogFormVisible = false">确 定</el-button>
-          <el-button :style="{display:form.saveDisplay}" type="primary" @click="save">保 存</el-button>
         </div>
       </el-dialog>
     </div>
@@ -162,11 +137,14 @@
 </template>
 
 <script>
+
   import {mapGetters} from 'vuex'
   import {formatDate} from 'element-ui/lib/utils/date-util';
 
   export default {
-    name: 'Dashboard',
+    name: 'Index',
+    //import引入的组件需要注入到对象中才能使用",
+    components: {},
     data() {
       return {
         loading: true,
@@ -186,7 +164,7 @@
           endDate: '',
           courseAmount: '',
           teacher: {
-            id:'',
+            id: '',
             name: ''
           },
           date1: '',
@@ -201,18 +179,18 @@
           newDisplay: '',
           credit: 0
         },
-        formLabelWidth: '120px',
-        deleteDisplay: 'none'
+        formLabelWidth: '120px'
       };
     },
-    created() {
-      this.list();
-    },
+    //监听属性 类似于data概念",
     computed: {
       ...mapGetters([
         'name'
       ])
     },
+    //监控data中的数据变化",
+    watch: {},
+    //方法集合",
     methods: {
       handleDelete(index, row) {
         console.log(index, row);
@@ -222,7 +200,7 @@
           customClass: 'del-model',
           type: 'warning'
         }).then(() => {
-          this.$http.post(this.url + "/course/delete", {
+          this.$http.post(this.url + "/course/deleteMyCourse", {
             id: row.id
           }).then(() => {
             this.list()
@@ -247,34 +225,19 @@
       list(conditions) {
         console.log(this.currentPage, this.total, this.size, this.conditions)
         this.loading = true;
-        this.$http.post(this.url + "/course/list", {
+        this.$http.post(this.url + "/course/listMyCourse", {
           current: this.currentPage,
           total: this.total,
           size: this.pageSize,
           conditions
         }).then(data => {
           console.log(data);
-          this.$http.post(this.url + "/auth/authCheck", [
-            {
-              key: "auth1",
-              params: {},
-              path: "/course/delete",
-              module: "course"
-            }
-          ]).then(date => {
-            if (date.data.data.auth1) {
-              this.deleteDisplay = '';
-            } else {
-              this.deleteDisplay = 'none';
-            }
-            data.data.courseList.map((item, index) => {
-              item.deleteDisplay = this.deleteDisplay;
-              item.form = item.form === "ONLINE" ? "网课" : "线下";
-            })
-            this.tableData = data.data.courseList;
-            this.loading = false;
-          });
-        }).catch(error=>{
+          data.data.data.map((item, index) => {
+            item.form = item.form === "ONLINE" ? "网课" : "线下";
+          })
+          this.tableData = data.data.data;
+          this.loading = false;
+        }).catch(error => {
           this.loading = false;
         })
       },
@@ -312,86 +275,49 @@
         }
         target.blur();
         this.list();
-      },
-      renderHeader () {
-        return (
-          <div><el-button type="primary" size='small' on-click= {()=>this.newCourse()}> 新增 </el-button></div>
-        )
-      },
-      newCourse(){
-        this.$http.post(this.url + "/course/teacher/list").then(date=>{
-          console.log(date)
-          this.form.date = "";
-          this.form.endDate = "";
-          this.form.courseAmount = "";
-          this.form.form = "ONLINE";
-          this.form.teacher.name = "";
-          this.form.teacher.id = "";
-          this.form.courseName = "";
-          this.form.place = "";
-          this.form.credit = 0;
-          this.form.options = date.data.data;
-          this.form.saveDisplay = '';
-          this.form.newDisplay = 'none';
-          this.form.disabled = false;
-          this.dialogFormVisible = true;
-        })
-      },
-      save(){
-        this.$http.post(this.url + "/course/save",{
-          courseName: this.form.courseName,
-          teacher: this.form.teacher,
-          credit: this.form.credit,
-          place: this.form.place,
-          form: this.form.form,
-          date: this.form.date,
-          endDate: this.form.endDate,
-          courseAmount: this.form.courseAmount
-        }).then(date=>{
-          if(date.data.code === 20000){
-            this.$message({
-              message: '保存成功',
-              type: 'success'
-            });
-            this.dialogFormVisible = false;
-            this.list();
-          }
-        })
-      },
-      handleChoose(index, row){
-        this.$http.post(this.url + "/course/chooseCourse",{
-          id: row.id
-        }).then(date=>{
-          if(date.data.data){
-            this.$message({
-              message: '选课成功',
-              type: 'success'
-            });
-          }else{
-            this.$message.error('选课失败');
-          }
-          this.list();
-        })
       }
-    }
+    },
+    //生命周期 - 创建之前",数据模型未加载,方法未加载,html模板未加载
+    beforeCreate() {
+    },
+
+    //生命周期 - 创建完成（可以访问当前this实例）",数据模型已加载，方法已加载,html模板已加载,html模板未渲染
+    created() {
+      this.list();
+    },
+    //生命周期 - 挂载之前",html模板未渲染
+    beforeMount() {
+
+    },
+
+    //生命周期 - 挂载完成（可以访问DOM元素）",html模板已渲染
+    mounted() {
+
+    },
+
+    //生命周期 - 更新之前",数据模型已更新,html模板未更新
+    beforeUpdate() {
+
+    },
+    //生命周期 - 更新之后",数据模型已更新,html模板已更新
+    updated() {
+
+    },
+    //生命周期 - 销毁之前",
+    beforeDestroy() {
+
+    },
+    destroyed() {
+
+    },
+    //生命周期 - 销毁完成",
+    //如果页面有keep-alive缓存功能，这个函数会触发",
+    activated() {
+
+    },
   }
 </script>
 
 <style>
-  #box ul {
-    display: flex;
-    flex-wrap: wrap;
-  }
 
-  #box li {
-    padding: 3px;
-    list-style: none;
-    margin-right: 15px;
-    border: 1px solid #eee;
-  }
-
-  #box img {
-    width: 200px;
-    height: 150px;
-  }
 </style>
